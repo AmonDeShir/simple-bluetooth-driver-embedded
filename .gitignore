@@ -1,0 +1,5 @@
+/.mypy_cache
+/all-stubs
+/repo
+/src/secret
+/**/__pycache__
