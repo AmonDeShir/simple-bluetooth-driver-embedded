@@ -18,7 +18,7 @@ def _():
     @it('should connect to the uart from config')
     def _():
         bluetooth = Bluetooth()
-        UART_MOCK.assert_called_with(Config().bluetooth_uart, 9600)
+        UART_MOCK.assert_called_with(Config.bluetooth_uart, 9600)
 
 
     @it('should connect to the uart irc')

@@ -5,10 +5,9 @@ from typing import Callable
 
 class Bluetooth:
     def __init__(self):
-        config = Config()
         self.events = dict()
 
-        self.uart = UART(config.bluetooth_uart, 9600)
+        self.uart = UART(Config.bluetooth_uart, 9600)
         self._initEventQueue()
 
 
