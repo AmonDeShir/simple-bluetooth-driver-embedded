@@ -2,21 +2,20 @@ from machine import UART
 from src.secret.conf import Config
 from typing import Callable
 
-
 class Bluetooth:
     def __init__(self):
         self.events = dict()
-
         self.uart = UART(Config.bluetooth_uart, 9600)
-        self._initEventQueue()
 
 
-    def _initEventQueue(self):
-        self.uart.irq(trigger=UART.IRQ_TX, handler=self._eventQueue)
+    def listen(self):
+        msg = self.receive()
+            
+        if not msg is None:
+            self._eventQueue(msg.split(":"))
 
 
-    def _eventQueue(self):
-        msg = self.receive().split(":")
+    def _eventQueue(self, msg):
         key = msg[0]
         args = msg[1] if len(msg) > 1 else None
 
