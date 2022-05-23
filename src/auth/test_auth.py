@@ -1,16 +1,17 @@
-from pocha import after, before_each, after_each, describe, it
-from unittest.mock import MagicMock
+from pocha import after_each, describe, it
+from unittest.mock import patch
 
 from src.auth.auth import Auth
 from src.secret.conf import Config
-import jwt
 
-
-def raise_(ex):
-    raise ex
 
 @describe('Auth')
 def _():
+    @after_each
+    def _():
+        Auth.CURRENT_SESSION = None
+
+
     @describe('check_password')
     def _():
         @it('should return true if password is correct')
@@ -23,30 +24,29 @@ def _():
             assert not Auth.check_password('incorrect password')
 
 
-    @describe('check_token')
+    @describe('clear_session')
     def _():
-        origin = jwt.decode
-
-        @after
+        @it('should clear the current session')
         def _():
-            jwt.decode = origin
+            Auth.CURRENT_SESSION = 'current-ID'
+            Auth.clear_session()
+            assert Auth.CURRENT_SESSION == None
 
 
-        @it('should return true if token is correct')
-        def _():
-            jwt.decode = lambda _, __, algorithms : True
-            assert Auth.check_token('correct token')
-
-
-        @it('should return false if token is incorrect')
-        def _():
-            jwt.decode = lambda _, __, algorithms : raise_(Exception("Invalid token"))
-            assert not Auth.check_token('incorrect token')
-
-    
-    @describe('generate_token')
+    @describe('create_session')
     def _():
-        @it('should return a new correct decodable token')
-        def _():
-            token = Auth.generate_token()
-            assert jwt.decode(token, Config.jwt_secret, algorithms=['HS256'])
+        @it('should return a new session ID')
+        @patch('src.auth.auth.nanoid.generate')
+        def _(generate):
+            generate.return_value = 'new-ID'
+            assert Auth.create_session() == 'new-ID'
+
+        
+        @it('should replace an existing session ID with a new one')
+        @patch('src.auth.auth.nanoid.generate')
+        def _(generate):
+            Auth.CURRENT_SESSION = 'old-ID'
+            generate.return_value = 'new-ID'
+            
+            Auth.create_session()
+            assert Auth.CURRENT_SESSION == 'new-ID'

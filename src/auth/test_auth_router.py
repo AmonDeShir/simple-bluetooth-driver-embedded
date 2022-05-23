@@ -23,11 +23,11 @@ def _():
         def _(Auth):
             bluetooth = MagicMock()
             Auth.check_password.return_value = True
-            Auth.generate_token.return_value = "token"
+            Auth.create_session.return_value = "new-session"
 
             auth_router = AuthRouter(bluetooth)
             auth_router.log_in('correct password')
-            bluetooth.emit.assert_called_with("log-in-success:token")
+            bluetooth.emit.assert_called_with("log-in-success:new-session")
     
 
         @it('should emit log-in-failure if password is incorrect')
@@ -55,10 +55,10 @@ def _():
             self.args = args
 
 
-    @it('should emit operation-failure:unauthorized if the token if there are no arguments')
+    @it('should emit operation-failure:unauthorized if there are no arguments')
     @patch('src.auth.auth_router.Auth')
     def _(Auth):
-        Auth.check_token.return_value = True
+        Auth.verify_session.return_value = True
 
         test = Test()
         test.test_function(None)
@@ -66,24 +66,24 @@ def _():
         test.bluetooth.emit.assert_called_with("operation-failure:unauthorized")
 
 
-    @it('should call the decorated function if the token is valid')
+    @it('should call the decorated function if the session ID is valid')
     @patch('src.auth.auth_router.Auth')
     def _(Auth):
-        Auth.check_token.return_value = True
+        Auth.verify_session.return_value = True
 
         test = Test()
-        test.test_function("token")
+        test.test_function("session-id")
         assert test.called == True
         assert test.bluetooth.emit.call_count == 0
     
     
-    @it('should emit operation-failure:unauthorized if the token is invalid')
+    @it('should emit operation-failure:unauthorized if the session ID is invalid')
     @patch('src.auth.auth_router.Auth')
     def _(Auth):
-        Auth.check_token.return_value = False
+        Auth.verify_session.return_value = False
 
         test = Test()
-        test.test_function("token")
+        test.test_function("session-id")
         assert test.called == False
         test.bluetooth.emit.assert_called_with("operation-failure:unauthorized")
 
@@ -91,10 +91,10 @@ def _():
     @it('should call the decorated function with arguments')
     @patch('src.auth.auth_router.Auth')
     def _(Auth):
-        Auth.check_token.return_value = True
+        Auth.verify_session.return_value = True
 
         test = Test()
-        test.test_function("token, second argument, third argument")
+        test.test_function("session-id, second argument, third argument")
         assert test.called == True
         assert test.args == "second argument, third argument"
 
@@ -102,9 +102,9 @@ def _():
     @it('should call the decorated function with None if there are no arguments')
     @patch('src.auth.auth_router.Auth')
     def _(Auth):
-        Auth.check_token.return_value = True
+        Auth.verify_session.return_value = True
 
         test = Test()
-        test.test_function("token")
+        test.test_function("session-id")
         assert test.called == True
         assert test.args == None

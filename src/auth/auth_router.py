@@ -1,5 +1,6 @@
+from requests import session
 from ..bluetooth.bluetooth import Bluetooth
-from auth import Auth
+from .auth import Auth
 from typing import Callable
 
 class AuthRouter:
@@ -10,12 +11,17 @@ class AuthRouter:
 
     def log_in(self, password: str):
         if Auth.check_password(password):
-            self.bluetooth.emit(f"log-in-success:{Auth.generate_token()}")
+            self.bluetooth.emit(f"log-in-success:{Auth.create_session()}")
         else:
             self.bluetooth.emit("log-in-failure")
 
 
 def authenticate(operation: str):
+    """
+    Authenticate the support staff session.
+    This decorator must be used inside a Router-like class (requires self.bluetooth property).
+    """
+
     def wrapper(func: Callable[[str], None]):
         def wrapper(self, args: str):
             if args is None:
@@ -23,13 +29,13 @@ def authenticate(operation: str):
                 return
     
             args = args.split(", ")
-            token = args.pop(0)
+            session = args.pop(0)
             args = ', '.join(args) 
             
             if len(args) == 0:
                 args = None
 
-            if Auth.check_token(token):
+            if Auth.verify_session(session):
                 func(self, args)
             else:
                 self.bluetooth.emit(f"{operation}-failure:unauthorized")
